@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Windows Process Enumeration
 
 > Tổng hợp và tìm hiểu **8 cách liệt kê tiến trình (process enumeration) trên Windows bằng C**, từ Win32 API, PSAPI, Tool Help, Native API đến Windows Terminal Services (WTS) và Windows Management Instrumentation (WMI).
@@ -851,7 +850,3 @@ Các giải thích về cơ chế API và đặc điểm Windows đã được �
 ---
 
 **Phạm vi project:** mã C mang mục đích học tập và nghiên cứu Windows process enumeration. README mô tả **8 file source được cung cấp**. Các source chưa được biên dịch và kiểm thử runtime trên Windows trong môi trường biên soạn tài liệu này.
-=======
-# Windows-Process-Enumeration
-Exploring Windows process enumeration techniques in C using WinAPI, Native API, WMI, and WTS to retrieve process names, architectures, and command lines.
->>>>>>> 4175beeccb65916033087c9b4bb73cc3eae4a282
