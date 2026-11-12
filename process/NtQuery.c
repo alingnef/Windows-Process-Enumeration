@@ -83,7 +83,7 @@ int main() {
     if (NtQSI(5, buf, len + 65536, &len) < 0)
         return 1;
 
-    printf("%-30s %-6s %s\n", "NAME", "ARCH", "CMD");
+    printf("%-7s %-30s %-6s %s\n", "PID", "NAME", "ARCH", "CMD");
 
     SPI *p = (SPI *)buf;
 
@@ -113,7 +113,8 @@ int main() {
 
         char *cmd = h ? cmdline(h) : NULL;
 
-        printf("%-30s %-6s %s\n",
+        printf("%-7lu %-30s %-6s %s\n",
+            (unsigned long)pid,
             name,
             h ? arch(h) : "?",
             cmd ? cmd : "?"

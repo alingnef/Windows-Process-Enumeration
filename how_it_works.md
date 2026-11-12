@@ -4,10 +4,12 @@
 
 Mục tiêu của project là tìm hiểu **mỗi API lấy danh sách process như thế nào**, sau đó in các thông tin:
 
-- **PID** — Process Identifier (có trong 5 chương trình mới; ba chương trình gốc chưa in PID).
-- **NAME** — tên file thực thi, ví dụ `explorer.exe`.
-- **ARCH** — kiến trúc process, thường là `x86`, `x64` hoặc `ARM64`.
-- **CMD** — chuỗi command line gắn với process, ví dụ `"C:\Windows\System32\notepad.exe" file.txt`.
+- **PID** - Process Identifier, mã định danh tiến trình.
+- **NAME** - tên file thực thi, ví dụ `explorer.exe`.
+- **ARCH** - kiến trúc process, thường là `x86`, `x64` hoặc `ARM64`.
+- **CMD** - chuỗi command line gắn với process, ví dụ `"C:\Windows\System32\notepad.exe" file.txt`.
+
+**Định dạng đầu ra thống nhất:** `PID | NAME | ARCH | CMD` trong cả 8 file `.c`.
 
 **Lưu ý:** *Liệt kê được process* không có nghĩa *đọc được mọi trường của process đó*. Các process hệ thống, protected process, process khác người dùng hoặc process vừa kết thúc có thể không đọc được `ARCH`/`CMD`; khi đó chương trình in `?` hoặc, riêng `enumprocess.c`, bỏ qua process không mở được handle.
 
@@ -16,14 +18,14 @@ Mục tiêu của project là tìm hiểu **mỗi API lấy danh sách process n
 1. [Danh sách mã nguồn](#1-danh-sách-mã-nguồn)
 2. [Yêu cầu và hướng dẫn biên dịch](#2-yêu-cầu-và-hướng-dẫn-biên-dịch)
 3. [Hai thao tác dùng chung: xác định ARCH và đọc CMD](#3-hai-thao-tác-dùng-chung-xác-định-arch-và-đọc-cmd)
-4. [PSAPI — EnumProcesses](#4-psapi--enumprocesses)
-5. [Tool Help — CreateToolhelp32Snapshot](#5-tool-help--createtoolhelp32snapshot)
-6. [Native API — NtQuerySystemInformation (5)](#6-native-api--ntquerysysteminformation-5)
-7. [WTS — WTSEnumerateProcessesW](#7-wts--wtsenumerateprocessesw)
-8. [Native API — NtGetNextProcess](#8-native-api--ntgetnextprocess)
-9. [WTS — WTSEnumerateProcessesExW](#9-wts--wtsenumerateprocessesexw)
-10. [WMI — Win32_Process](#10-wmi--win32_process)
-11. [Native API — SystemBasicProcessInformation (252)](#11-native-api--systembasicprocessinformation-252)
+4. [PSAPI - EnumProcesses](#4-psapi--enumprocesses)
+5. [Tool Help - CreateToolhelp32Snapshot](#5-tool-help--createtoolhelp32snapshot)
+6. [Native API - NtQuerySystemInformation (5)](#6-native-api--ntquerysysteminformation-5)
+7. [WTS - WTSEnumerateProcessesW](#7-wts--wtsenumerateprocessesw)
+8. [Native API - NtGetNextProcess](#8-native-api--ntgetnextprocess)
+9. [WTS - WTSEnumerateProcessesExW](#9-wts--wtsenumerateprocessesexw)
+10. [WMI - Win32_Process](#10-wmi--win32_process)
+11. [Native API - SystemBasicProcessInformation (252)](#11-native-api--systembasicprocessinformation-252)
 12. [So sánh và giới hạn](#12-so-sánh-và-giới-hạn)
 13. [Xử lý lỗi thường gặp](#13-xử-lý-lỗi-thường-gặp)
 14. [Tài liệu tham khảo](#14-tài-liệu-tham-khảo)
@@ -31,28 +33,27 @@ Mục tiêu của project là tìm hiểu **mỗi API lấy danh sách process n
 ## 1. Danh sách mã nguồn
 
 ```text
-Windows-Process-Enumeration/
-├── README.md
+process/
 ├── enumprocess.c
 ├── snapshot.c
 ├── NtQuery.c
 ├── WTSEnumerateProcessesW.c
 ├── NtGetNextProcess.c
-├── WTSEnumerateProcessesExW.c      # phien ban da sua, nap API bang GetProcAddress
+├── WTSEnumerateProcessesExW.c
 ├── WMI.c
 └── SystemBasicProcessInformation.c
 ```
 
-| File | Nhóm API | Hàm/cơ chế liệt kê | Nguồn NAME | Nguồn CMD |
-| --- | --- | --- | --- | --- |
-| `enumprocess.c` | PSAPI | `EnumProcesses()` | `QueryFullProcessImageNameA()` | `NtQueryInformationProcess(60)` |
-| `snapshot.c` | Tool Help | `CreateToolhelp32Snapshot()` + `Process32First/Next()` | `PROCESSENTRY32.szExeFile` | `NtQueryInformationProcess(60)` |
-| `NtQuery.c` | Native API | `NtQuerySystemInformation(5)` | `SYSTEM_PROCESS_INFORMATION.ImageName` | `NtQueryInformationProcess(60)` |
-| `WTSEnumerateProcessesW.c` | WTS | `WTSEnumerateProcessesW()` | `WTS_PROCESS_INFOW.pProcessName` | `NtQueryInformationProcess(60)` |
-| `NtGetNextProcess.c` | Native API | `NtGetNextProcess()` | `QueryFullProcessImageNameW()` | `NtQueryInformationProcess(60)` |
-| `WTSEnumerateProcessesExW.c` | WTS (dynamic loading) | `WTSEnumerateProcessesExW()` qua `GetProcAddress()` | `MY_WTS_PROCESS_INFO_EXW.pProcessName` | `NtQueryInformationProcess(60)` |
-| `WMI.c` | COM/WMI | Truy vấn WQL tới `Win32_Process` | `Win32_Process.Name` | `Win32_Process.CommandLine` |
-| `SystemBasicProcessInformation.c` | Native API | `NtQuerySystemInformation(252)` | `SYSTEM_BASICPROCESS_INFORMATION.ImageName` | `NtQueryInformationProcess(60)` |
+| File | Nhóm API | Hàm/cơ chế liệt kê | Nguồn PID | Nguồn NAME | Nguồn CMD |
+| --- | --- | --- | --- | --- | --- |
+| `enumprocess.c` | PSAPI | `EnumProcesses()` | `pid[i]` | `QueryFullProcessImageNameA()` | `NtQueryInformationProcess(60)` |
+| `snapshot.c` | Tool Help | `CreateToolhelp32Snapshot()` + `Process32First/Next()` | `p.th32ProcessID` | `PROCESSENTRY32.szExeFile` | `NtQueryInformationProcess(60)` |
+| `NtQuery.c` | Native API | `NtQuerySystemInformation(5)` | `p->UniqueProcessId` | `SYSTEM_PROCESS_INFORMATION.ImageName` | `NtQueryInformationProcess(60)` |
+| `WTSEnumerateProcessesW.c` | WTS | `WTSEnumerateProcessesW()` | `items[i].ProcessId` | `WTS_PROCESS_INFOW.pProcessName` | `NtQueryInformationProcess(60)` |
+| `NtGetNextProcess.c` | Native API | `NtGetNextProcess()` | `GetProcessId(next)` | `QueryFullProcessImageNameW()` | `NtQueryInformationProcess(60)` |
+| `WTSEnumerateProcessesExW.c` | WTS (dynamic loading) | `WTSEnumerateProcessesExW()` qua `GetProcAddress()` | `items[i].ProcessId` | `MY_WTS_PROCESS_INFO_EXW.pProcessName` | `NtQueryInformationProcess(60)` |
+| `WMI.c` | COM/WMI | Truy vấn WQL tới `Win32_Process` | `Win32_Process.ProcessId` | `Win32_Process.Name` | `Win32_Process.CommandLine` |
+| `SystemBasicProcessInformation.c` | Native API | `NtQuerySystemInformation(252)` | `p->UniqueProcessId` | `SYSTEM_BASICPROCESS_INFORMATION.ImageName` | `NtQueryInformationProcess(60)` |
 
 **Phân biệt:** Đây là **8 chương trình sử dụng các API/biến thể khác nhau**, không phải 8 phương pháp kernel hoàn toàn độc lập. Hai bản WTS sử dụng cùng hệ sinh thái Remote Desktop Services, còn hai bản `NtQuerySystemInformation` sử dụng **cùng một hàm với information class khác nhau**.
 
@@ -103,20 +104,6 @@ gcc SystemBasicProcessInformation.c -o basic.exe
 
 Trong các file Native API, `GetProcAddress(GetModuleHandleA("ntdll.dll"), "...")` giải quyết địa chỉ hàm **lúc chạy**, vì vậy không cần thêm `-lntdll` cho các lời gọi được nạp động đó. Tương tự, WTS Ex đã sửa tự khai báo kiểu dữ liệu cục bộ để không phụ thuộc vào những định nghĩa thiếu trong `wtsapi32.h` của một số bộ MinGW cũ.
 
-Nếu bạn **giữ nguyên tên file tải về** là `WTSEnumerateProcessesExW_fixed.c` thay vì ghi đè file cũ, hãy chạy:
-
-```bat
-gcc WTSEnumerateProcessesExW_fixed.c -o wtsex.exe -Wall -Wextra
-```
-
-Không dùng lại bản `WTSEnumerateProcessesExW.c` cũ với các khai báo chưa được MinGW hỗ trợ; chỉ thay lệnh GCC mà không thay mã nguồn sẽ **không giải quyết** các lỗi `implicit declaration` / `undeclared`.
-
-Muốn xem thêm cảnh báo của GCC, thêm `-Wall -Wextra`, ví dụ:
-
-```bat
-gcc -Wall -Wextra NtGetNextProcess.c -o next.exe
-```
-
 ### 2.3. Chạy và kiểm tra kết quả
 
 ```bat
@@ -130,17 +117,16 @@ wmi.exe
 basic.exe
 ```
 
-Ví dụ **minh họa**, không phải kết quả chạy thực tế:
-
+Ví dụ **minh họa**:
 ```text
 PID     NAME                           ARCH   CMD
-4896    explorer.exe                   x64    C:\Windows\Explorer.EXE
-7220    cmd.exe                        x64    C:\Windows\system32\cmd.exe
-9004    python.exe                     x64    python main.py
-4       System                         ?      ?
+5428    agent_ovpnconnect.exe          x64    "C:\Program Files\OpenVPN Connect\agent_ovpnconnect.exe"
+5436    AnyDesk.exe                    x86    "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --service
+5744    ovpnhelper_service.exe         x64    "C:\Program Files\OpenVPN Connect\ovpnhelper_service.exe"
+7584    AsusOptimizationStartupTask.exe x64    "C:\WINDOWS\System32\DriverStore\FileRepository\asussci2.inf_amd64_01a5341a45b84f7d\ASUSOptimization\AsusOptimizationStartupTask.exe"
 ```
 
-**Ba file đầu** (`enumprocess.c`, `snapshot.c`, `NtQuery.c`) **chỉ in `NAME | ARCH | CMD`** trong phiên bản đang có; năm file mới in `PID | NAME | ARCH | CMD`. Không phải chương trình nào cũng in cột PID như ví dụ trên.
+**Cả 8 file hiện đều in `PID | NAME | ARCH | CMD`**, bao gồm ba file gốc `enumprocess.c`, `snapshot.c`, `NtQuery.c` đã được bổ sung cột PID. Đây là ví dụ định dạng kết quả; từng API có thể trả về số lượng process khác nhau, và `enumprocess.c` vẫn bỏ qua process không mở được handle.
 
 Để lưu output vào file, ví dụ:
 
@@ -250,7 +236,7 @@ gcc -DPSAPI_VERSION=1 enumprocess.c -o enumprocess.exe -lpsapi
 4. Với mỗi PID, gọi `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, ...)`.
 5. Gọi `QueryFullProcessImageNameA()` để lấy đường dẫn executable, rồi `strrchr(path, '\\')` để lấy **tên file cuối đường dẫn** (`NAME`).
 6. Với handle đó, gọi `arch(h)` và `cmdline(h)`.
-7. In `NAME | ARCH | CMD`, `free(cmd)` và `CloseHandle(h)`.
+7. In `PID | NAME | ARCH | CMD`, lấy **PID trực tiếp từ `pid[i]`**; sau đó `free(cmd)` và `CloseHandle(h)`.
 
 Đoạn mã quyết định phần liệt kê:
 
@@ -262,10 +248,22 @@ if (!EnumProcesses(pid, sizeof(pid), &bytes))
 for (DWORD i = 0; i < bytes / sizeof(DWORD); i++) {
     HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid[i]);
     if (!h) continue;
-    /* lay NAME, ARCH, CMD */
+    /* lay NAME, ARCH, CMD; sau do in kem pid[i] */
     CloseHandle(h);
 }
 ```
+
+Lệnh in trong **phiên bản đã bổ sung PID** là:
+
+```c
+printf("%-7lu %-30s %-6s %s\n",
+       (unsigned long)pid[i],
+       name,
+       arch(h),
+       cmd ? cmd : "?");
+```
+
+Giá trị `pid[i]` được lấy ngay từ mảng do `EnumProcesses()` cung cấp, không cần gọi API khác để tìm PID.
 
 ### Điểm cần chú ý
 
@@ -294,7 +292,8 @@ Khác với `EnumProcesses`, Tool Help tạo một **snapshot** của danh sách
 4. Dùng `do { ... } while (Process32Next(snapshot, &p));` để duyệt hết bản ghi.
 5. `p.th32ProcessID` chứa PID; `p.szExeFile` chứa `NAME`.
 6. `OpenProcess(...)` theo PID để truy vấn `ARCH`/`CMD`.
-7. Gọi `CloseHandle(snapshot)` sau khi dùng xong.
+7. In `PID | NAME | ARCH | CMD`, với PID là `p.th32ProcessID`, không phụ thuộc vào kết quả mở handle.
+8. Gọi `CloseHandle(snapshot)` sau khi dùng xong.
 
 Đoạn code cốt lõi:
 
@@ -310,6 +309,18 @@ do {
 
 CloseHandle(s);
 ```
+
+Lệnh in trong **phiên bản đã bổ sung PID**:
+
+```c
+printf("%-7lu %-30s %-6s %s\n",
+       (unsigned long)p.th32ProcessID,
+       p.szExeFile,
+       h ? arch(h) : "?",
+       cmd ? cmd : "?");
+```
+
+Do `PROCESSENTRY32` đã chứa PID và tên process, chương trình vẫn có thể hiển thị hai trường này ngay cả khi `OpenProcess()` thất bại.
 
 ### Điểm cần chú ý
 
@@ -337,8 +348,9 @@ gcc NtQuery.c -o NtQuery.exe
 4. Buffer chứa các record kiểu `SYSTEM_PROCESS_INFORMATION` liên tiếp, với các trường quan trọng: `NextEntryOffset`, `ImageName`, `UniqueProcessId`.
 5. Lấy PID bằng `UniqueProcessId`, lấy `NAME` từ `ImageName` (`UNICODE_STRING`).
 6. Gọi `OpenProcess(pid)` để đọc `ARCH` và `CMD`.
-7. Tới record kế tiếp bằng phép cộng địa chỉ: `p = (SPI *)((BYTE *)p + p->NextEntryOffset)`.
-8. Dừng khi `NextEntryOffset == 0`.
+7. In `PID | NAME | ARCH | CMD`, với PID được ép kiểu từ `p->UniqueProcessId`.
+8. Tới record kế tiếp bằng phép cộng địa chỉ: `p = (SPI *)((BYTE *)p + p->NextEntryOffset)`.
+9. Dừng khi `NextEntryOffset == 0`.
 
 Đoạn code quan trọng:
 
@@ -349,11 +361,24 @@ NtQSI(5, buf, len + 65536, &len);
 
 SPI *p = (SPI *)buf;
 while (1) {
-    /* p->UniqueProcessId, p->ImageName */
+    DWORD pid = (DWORD)(ULONG_PTR)p->UniqueProcessId;
+    /* lay NAME tu ImageName, mo handle de lay ARCH/CMD */
     if (!p->NextEntryOffset) break;
     p = (SPI *)((BYTE *)p + p->NextEntryOffset);
 }
 ```
+
+Lệnh in trong **phiên bản đã bổ sung PID**:
+
+```c
+printf("%-7lu %-30s %-6s %s\n",
+       (unsigned long)pid,
+       name,
+       h ? arch(h) : "?",
+       cmd ? cmd : "?");
+```
+
+`UniqueProcessId` có kiểu tương thích với handle/pointer nên mã dùng `(DWORD)(ULONG_PTR)` để lấy PID, sau đó `(unsigned long)` khi đưa vào `printf` với định dạng `%lu`.
 
 **Tại sao cộng `NextEntryOffset`?** `SYSTEM_PROCESS_INFORMATION` trả về chuỗi record có kích thước thay đổi (ví dụ tùy thông tin thread). Vì thế, không thể giả định `p++` luôn nhảy đến record tiếp theo; phải dùng offset do hệ thống cung cấp.
 
@@ -846,7 +871,3 @@ Các giải thích về cơ chế API và đặc điểm Windows đã được �
 - Microsoft — [IsWow64Process2](https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process2)
 - NtDoc — [NtGetNextProcess](https://ntdoc.m417z.com/ntgetnextprocess)
 - NtDoc — [ProcessCommandLineInformation (60)](https://ntdoc.m417z.com/processinfoclass)
-
----
-
-**Phạm vi project:** mã C mang mục đích học tập và nghiên cứu Windows process enumeration. README mô tả **8 file source được cung cấp**. Các source chưa được biên dịch và kiểm thử runtime trên Windows trong môi trường biên soạn tài liệu này.

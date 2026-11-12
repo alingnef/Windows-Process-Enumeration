@@ -70,4 +70,4 @@ int main()
     return 0;
 }
 ```
-Khi mà mới học C thì người ta thường nói chương trình sẽ bắt đầu từ hàm `main`. Điều này là đúng với góc nhìn của người học ngôn ngữ C. Nhưng mà đối với hệ điều hành, cụ thể ở đây là Windows thì không nghĩ như vậy. Khi mà compiler source code C sang mã máy thì bây giờ 
+Khi mà mới học C thì người ta thường nói chương trình sẽ bắt đầu từ hàm `main`. Điều này là đúng với góc nhìn của người học ngôn ngữ C. Nhưng mà đối với hệ điều hành, cụ thể ở đây là Windows thì không nghĩ như vậy.

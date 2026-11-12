@@ -62,7 +62,7 @@ int main() {
     if (!EnumProcesses(pid, sizeof(pid), &bytes))
         return 1;
 
-    printf("%-30s %-6s %s\n", "NAME", "ARCH", "CMD");
+    printf("%-7s %-30s %-6s %s\n", "PID", "NAME", "ARCH", "CMD");
 
     for (DWORD i = 0; i < bytes / sizeof(DWORD); i++) {
         HANDLE h = OpenProcess(
@@ -84,7 +84,8 @@ int main() {
 
         char *cmd = cmdline(h);
 
-        printf("%-30s %-6s %s\n",
+        printf("%-7lu %-30s %-6s %s\n",
+            (unsigned long)pid[i],
             name,
             arch(h),
             cmd ? cmd : "?"

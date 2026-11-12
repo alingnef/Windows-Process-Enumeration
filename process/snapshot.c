@@ -65,7 +65,7 @@ int main() {
     if (!Process32First(s, &p))
         return 1;
 
-    printf("%-30s %-6s %s\n", "NAME", "ARCH", "CMD");
+    printf("%-7s %-30s %-6s %s\n", "PID", "NAME", "ARCH", "CMD");
 
     do {
         HANDLE h = OpenProcess(
@@ -76,7 +76,8 @@ int main() {
 
         char *cmd = h ? cmdline(h) : NULL;
 
-        printf("%-30s %-6s %s\n",
+        printf("%-7lu %-30s %-6s %s\n",
+            (unsigned long)p.th32ProcessID,
             p.szExeFile,
             h ? arch(h) : "?",
             cmd ? cmd : "?"
